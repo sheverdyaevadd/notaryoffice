@@ -4,6 +4,9 @@ import com.notary.model.User;
 import com.notary.service.AuthService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 public class LoginController {
 
@@ -26,8 +29,13 @@ public class LoginController {
         try {
             User user = authService.login(login, password);
             if (user != null) {
-                errorLabel.setStyle("-fx-text-fill: green;");
-                errorLabel.setText("Добро пожаловать, " + user.getLogin() + "!");
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/view/ClientView.fxml")
+                );
+                Scene scene = new Scene(loader.load(), 900, 600);
+                Stage stage = (Stage) loginField.getScene().getWindow();
+                stage.setScene(scene);
+                stage.setMaximized(true);
             } else {
                 errorLabel.setText("Неверный логин или пароль");
             }

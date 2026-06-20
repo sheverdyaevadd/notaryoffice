@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.notary.controller.ClientController"
+      spacing="12">
+
+    <Label text="Клиенты"/>
+
+    <!-- Кнопки -->
+    <HBox spacing="8">
+        <Button text="Добавить" onAction="#handleAdd"/>
+        <Button text="Редактировать" onAction="#handleEdit"/>
+        <Button text="Удалить" onAction="#handleDelete"/>
+    </HBox>
+
+    <!-- Таблица -->
+    <TableView fx:id="clientTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+            <TableColumn fx:id="colName" text="Название" prefWidth="200"/>
+            <TableColumn fx:id="colActivity" text="Вид деятельности" prefWidth="180"/>
+            <TableColumn fx:id="colAddress" text="Адрес" prefWidth="200"/>
+            <TableColumn fx:id="colPhone" text="Телефон" prefWidth="130"/>
+        </columns>
+    </TableView>
+
+    <Label fx:id="statusLabel"/>
+
+</VBox>
