@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.notary.controller.LoginController">
+
+    <VBox alignment="CENTER" spacing="12">
+
+        <Label text="Нотариальная контора"/>
+
+        <Label text="Вход в систему"/>
+
+        <Region/>
+
+        <TextField fx:id="loginField"
+                   promptText="Логин"/>
+
+        <PasswordField fx:id="passwordField"
+                       promptText="Пароль"/>
+
+        <Label fx:id="errorLabel"/>
+
+        <Button text="Войти"
+                onAction="#handleLogin"
+                maxWidth="Infinity"/>
+
+    </VBox>
+</StackPane>

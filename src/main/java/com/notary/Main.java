@@ -1,21 +1,24 @@
 package com.notary;
 
-import com.notary.model.User;
-import com.notary.service.AuthService;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
-public class Main {
+public class Main extends Application {
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/view/LoginView.fxml")
+        );
+        Scene scene = new Scene(loader.load(), 400, 300);
+        stage.setTitle("Нотариальная контора");
+        stage.setScene(scene);
+        stage.show();
+    }
+
     public static void main(String[] args) {
-        try {
-            AuthService authService = new AuthService();
-            User user = authService.login("admin", "test_hash_admin");
-
-            if (user != null) {
-                System.out.println("Авторизация успешна: " + user.getLogin());
-            } else {
-                System.out.println("Неверный логин или пароль");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        launch(args);
     }
 }
