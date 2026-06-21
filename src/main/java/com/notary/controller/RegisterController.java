@@ -89,10 +89,11 @@ public class RegisterController {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/view/LoginView.fxml")
             );
-            Scene scene = new Scene(loader.load(), 800, 600);
+            Scene scene = new Scene(loader.load());
             Stage stage = (Stage) loginField.getScene().getWindow();
-            stage.setScene(scene);
             stage.setMaximized(false);
+            stage.setScene(scene);
+            javafx.application.Platform.runLater(() -> stage.setMaximized(true));
         } catch (Exception e) {
             errorLabel.setText("Ошибка перехода");
             e.printStackTrace();

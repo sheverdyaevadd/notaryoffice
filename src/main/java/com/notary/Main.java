@@ -12,9 +12,10 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/view/LoginView.fxml")
         );
-        Scene scene = new Scene(loader.load(), 400, 300);
+        Scene scene = new Scene(loader.load(), 800, 600);
         stage.setTitle("Нотариальная контора");
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
     }
 
