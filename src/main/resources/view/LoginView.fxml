@@ -25,6 +25,9 @@
         <Button text="Войти"
                 onAction="#handleLogin"
                 maxWidth="Infinity"/>
+        <Button text="Зарегистрироваться"
+                onAction="#handleGoToRegister"
+                maxWidth="Infinity"/>
 
     </VBox>
 </StackPane>

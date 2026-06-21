@@ -46,4 +46,19 @@ public class LoginController {
             e.printStackTrace();
         }
     }
+    @FXML
+    private void handleGoToRegister() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/RegisterView.fxml")
+            );
+            Scene scene = new Scene(loader.load(), 800, 600);
+            Stage stage = (Stage) loginField.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            errorLabel.setText("Ошибка перехода");
+            e.printStackTrace();
+        }
+    }
 }

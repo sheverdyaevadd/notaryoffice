@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.notary.controller.RegisterController">
+
+    <VBox alignment="CENTER" spacing="12">
+
+        <Label text="Регистрация"/>
+
+        <Label text="Создайте аккаунт оператора"/>
+
+        <Region/>
+
+        <VBox spacing="6">
+            <Label text="Логин"/>
+            <TextField fx:id="loginField" promptText="Введите логин"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Пароль"/>
+            <PasswordField fx:id="passwordField"
+                           promptText="Мин. 8 симв., цифра, заглавная, спецсимвол"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Email"/>
+            <TextField fx:id="emailField" promptText="Введите email"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Телефон"/>
+            <TextField fx:id="phoneField" promptText="Введите телефон"/>
+        </VBox>
+
+        <Label fx:id="errorLabel"/>
+
+        <Button text="Зарегистрироваться"
+                onAction="#handleRegister"
+                maxWidth="Infinity"/>
+
+        <Button text="Уже есть аккаунт? Войти"
+                onAction="#handleGoToLogin"
+                maxWidth="Infinity"/>
+    </VBox>
+</StackPane>
