@@ -198,11 +198,6 @@ public class ProvidedServiceController {
             e.printStackTrace();
         }
     }
-
-    /**
-     * Итоговая стоимость = базовая цена услуги * (1 - размер скидки / 100).
-     * Если скидка не выбрана — итоговая стоимость равна базовой цене услуги.
-     */
     private BigDecimal calculateFinalPrice(Service service, Discount discount) {
         if (service == null) return BigDecimal.ZERO;
         BigDecimal basePrice = service.getBasePrice();
@@ -315,14 +310,14 @@ public class ProvidedServiceController {
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
         saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
             if (dealCombo.getValue() == null) {
-                errorLabel.setText("⚠ Выберите сделку");
+                errorLabel.setText("Выберите сделку");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();
                 return;
             }
             if (serviceCombo.getValue() == null) {
-                errorLabel.setText("⚠ Выберите услугу");
+                errorLabel.setText("Выберите услугу");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 event.consume();

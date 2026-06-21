@@ -75,7 +75,7 @@ public class RegisterController {
                     "-fx-text-fill: #1e7e34; -fx-font-size: 13; -fx-font-weight: bold;" +
                             "-fx-background-color: #e6f4ea; -fx-padding: 6 10; -fx-background-radius: 4;"
             );
-            errorLabel.setText("Регистрация успешна! Войдите в систему.");
+            errorLabel.setText("Теперь войдите в систему.");
 
         } catch (Exception e) {
             errorLabel.setText("Ошибка регистрации");

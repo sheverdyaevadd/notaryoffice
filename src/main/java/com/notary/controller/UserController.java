@@ -193,7 +193,7 @@ public class UserController {
 
         loginField.setPromptText("Логин");
         passwordField.setPromptText(existing == null
-                ? "Пароль (мин. 8 симв., цифра, заглавная, спецсимвол)"
+                ? "8+ симв., цифра, заглавная, спецсимвол)"
                 : "Новый пароль (оставьте пустым чтобы не менять)");
         emailField.setPromptText("Email");
         phoneField.setPromptText("Телефон");
