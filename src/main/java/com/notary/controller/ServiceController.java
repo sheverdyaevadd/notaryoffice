@@ -112,6 +112,7 @@ public class ServiceController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) serviceTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка перехода");
@@ -151,17 +152,56 @@ public class ServiceController {
         descField.setPromptText("Описание");
         priceField.setPromptText("Базовая цена");
 
-        VBox box = new VBox(8, nameField, descField, priceField);
+        Label errorLabel = new Label();
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+
+        VBox box = new VBox(8, nameField, descField, priceField, errorLabel);
         box.setStyle("-fx-padding: 16;");
         dialog.getDialogPane().setContent(box);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (nameField.getText().trim().isEmpty()) {
+                errorLabel.setText("Укажите название услуги");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            BigDecimal price;
+            try {
+                price = new BigDecimal(priceField.getText().trim());
+            } catch (NumberFormatException e) {
+                errorLabel.setText("Цена должна быть числом");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (price.compareTo(BigDecimal.ZERO) < 0) {
+                errorLabel.setText("Цена не может быть отрицательной");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            errorLabel.setVisible(false);
+            errorLabel.setManaged(false);
+        });
 
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
                 return new Service(
                         existing != null ? existing.getId() : 0,
-                        nameField.getText(),
+                        nameField.getText().trim(),
                         descField.getText(),
-                        new BigDecimal(priceField.getText())
+                        new BigDecimal(priceField.getText().trim())
                 );
             }
             return null;

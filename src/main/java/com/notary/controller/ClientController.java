@@ -36,6 +36,8 @@ public class ClientController {
 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @FXML
     public void initialize() {
@@ -124,6 +126,7 @@ public class ClientController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) clientTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана сделок");
@@ -140,6 +143,7 @@ public class ClientController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) clientTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана оказанных услуг");
@@ -156,6 +160,7 @@ public class ClientController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) clientTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана услуг");
@@ -172,6 +177,7 @@ public class ClientController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) clientTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана скидок");
@@ -188,6 +194,7 @@ public class ClientController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) clientTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана пользователей");
@@ -240,19 +247,51 @@ public class ClientController {
 
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
         saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String login = loginField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
             String newPassword = passwordField.getText();
+
+            if (login.isEmpty()) {
+                errorLabel.setText("Логин не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (email.isEmpty()) {
+                errorLabel.setText("Email не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (!EMAIL_PATTERN.matcher(email).matches()) {
+                errorLabel.setText("Введите корректный email");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (phone.isEmpty()) {
+                errorLabel.setText("Не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
             if (!newPassword.isEmpty() && !PASSWORD_PATTERN.matcher(newPassword).matches()) {
-                errorLabel.setText("Пароль слишком слабый: нужно 8+ символов, цифра, заглавная буква и спецсимвол (!@#$%^&*)");
+                errorLabel.setText("8+ символов, цифра, заглавная буква, спецсимвол");
                 errorLabel.setVisible(true);
                 errorLabel.setManaged(true);
                 passwordField.setStyle(defaultPasswordFieldStyle +
                         "-fx-border-color: #e74c3c; -fx-border-width: 2; -fx-border-radius: 4;");
                 event.consume();
-            } else {
-                errorLabel.setVisible(false);
-                errorLabel.setManaged(false);
-                passwordField.setStyle(defaultPasswordFieldStyle);
+                return;
             }
+            errorLabel.setVisible(false);
+            errorLabel.setManaged(false);
+            passwordField.setStyle(defaultPasswordFieldStyle);
         });
 
         dialog.setResultConverter(btn -> {
@@ -264,10 +303,10 @@ public class ClientController {
 
                 return new User(
                         currentUser.getId(),
-                        loginField.getText(),
+                        loginField.getText().trim(),
                         passwordHash,
-                        emailField.getText(),
-                        phoneField.getText(),
+                        emailField.getText().trim(),
+                        phoneField.getText().trim(),
                         currentUser.getRegistrationDate(),
                         currentUser.getIdRole()
                 );

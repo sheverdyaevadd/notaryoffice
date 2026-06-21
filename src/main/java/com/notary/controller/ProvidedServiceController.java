@@ -174,6 +174,7 @@ public class ProvidedServiceController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) providedServiceTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка перехода");

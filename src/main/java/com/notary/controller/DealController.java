@@ -146,6 +146,7 @@ public class DealController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) dealTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана клиентов");
@@ -162,6 +163,7 @@ public class DealController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) dealTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка перехода");

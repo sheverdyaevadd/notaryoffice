@@ -24,6 +24,8 @@ public class RegisterController {
 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @FXML
     private void handleRegister() {
@@ -38,20 +40,25 @@ public class RegisterController {
         );
         errorLabel.setWrapText(true);
 
-        if (login.isEmpty() || password.isEmpty() || email.isEmpty()) {
-            errorLabel.setText("⚠ Заполните все обязательные поля");
+        if (login.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty()) {
+            errorLabel.setText("Заполните все обязательные поля");
+            return;
+        }
+
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            errorLabel.setText("Введите корректный email");
             return;
         }
 
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
-            errorLabel.setText("⚠ Пароль слишком слабый: нужно 8+ символов, цифра, заглавная буква и спецсимвол (!@#$%^&*)");
+            errorLabel.setText("8+ символов, цифра, заглавная буква и спецсимвол");
             return;
         }
 
         try {
             User existing = userDAO.findByLogin(login);
             if (existing != null) {
-                errorLabel.setText("⚠ Логин уже занят");
+                errorLabel.setText("Логин уже занят");
                 return;
             }
 

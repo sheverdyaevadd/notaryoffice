@@ -3,6 +3,7 @@ package com.notary.controller;
 import com.notary.dao.UserDAO;
 import com.notary.model.Role;
 import com.notary.model.User;
+import com.notary.util.PasswordHasher;
 import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -33,6 +34,8 @@ public class UserController {
 
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     @FXML
     public void initialize() {
@@ -130,6 +133,7 @@ public class UserController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) userTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка перехода");
@@ -157,6 +161,8 @@ public class UserController {
     private Dialog<User> buildDialog(User existing) {
         Dialog<User> dialog = new Dialog<>();
         dialog.setTitle(existing == null ? "Добавить пользователя" : "Редактировать пользователя");
+        dialog.getDialogPane().setMinWidth(420);
+        dialog.getDialogPane().setPrefWidth(420);
 
         ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
@@ -186,40 +192,105 @@ public class UserController {
         }
 
         loginField.setPromptText("Логин");
-        passwordField.setPromptText("Пароль (мин. 8 симв., цифра, заглавная, спецсимвол)");
+        passwordField.setPromptText(existing == null
+                ? "Пароль (мин. 8 симв., цифра, заглавная, спецсимвол)"
+                : "Новый пароль (оставьте пустым чтобы не менять)");
         emailField.setPromptText("Email");
         phoneField.setPromptText("Телефон");
 
         Label errorLabel = new Label();
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+        errorLabel.setMaxWidth(Double.MAX_VALUE);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
 
-        VBox box = new VBox(8, loginField, passwordField, emailField, phoneField, roleCombo, errorLabel);
+        VBox box = new VBox(8,
+                new Label("Логин:"), loginField,
+                new Label("Пароль:"), passwordField,
+                new Label("Email:"), emailField,
+                new Label("Телефон:"), phoneField,
+                new Label("Роль:"), roleCombo,
+                errorLabel
+        );
         box.setStyle("-fx-padding: 16;");
+        box.setPrefWidth(390);
         dialog.getDialogPane().setContent(box);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String login = loginField.getText().trim();
+            String email = emailField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String password = passwordField.getText();
+
+            if (login.isEmpty()) {
+                errorLabel.setText("Логин не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (email.isEmpty()) {
+                errorLabel.setText("Email не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (!EMAIL_PATTERN.matcher(email).matches()) {
+                errorLabel.setText("Введите корректный email");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (phone.isEmpty()) {
+                errorLabel.setText("Телефон не может быть пустым");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            boolean passwordRequired = existing == null;
+            if ((passwordRequired || !password.isEmpty()) && !PASSWORD_PATTERN.matcher(password).matches()) {
+                errorLabel.setText("8+ символов, цифра, заглавная буква, спецсимвол");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (roleCombo.getValue() == null) {
+                errorLabel.setText("Выберите роль");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            errorLabel.setVisible(false);
+            errorLabel.setManaged(false);
+        });
 
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
-                String password = passwordField.getText();
-                if (existing == null && !PASSWORD_PATTERN.matcher(password).matches()) {
-                    errorLabel.setText("Пароль: 8+ символов, цифра, заглавная, спецсимвол");
-                    return null;
-                }
                 Role selectedRole = roleCombo.getValue();
-                if (selectedRole == null) {
-                    errorLabel.setText("Выберите роль");
-                    return null;
-                }
+                if (selectedRole == null) return null;
+
+                String password = passwordField.getText();
                 String passwordHash = password.isEmpty() && existing != null
                         ? existing.getPasswordHash()
-                        : password;
+                        : PasswordHasher.hash(password);
 
                 return new User(
                         existing != null ? existing.getId() : 0,
-                        loginField.getText(),
+                        loginField.getText().trim(),
                         passwordHash,
-                        emailField.getText(),
-                        phoneField.getText(),
-                        LocalDateTime.now(),
+                        emailField.getText().trim(),
+                        phoneField.getText().trim(),
+                        existing != null ? existing.getRegistrationDate() : LocalDateTime.now(),
                         selectedRole.getId()
                 );
             }

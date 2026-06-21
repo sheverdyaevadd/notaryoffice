@@ -112,6 +112,7 @@ public class DiscountController {
             Scene scene = new Scene(loader.load());
             Stage stage = (Stage) discountTable.getScene().getWindow();
             stage.setScene(scene);
+            stage.setMaximized(false);
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка перехода");
@@ -169,12 +170,12 @@ public class DiscountController {
             try {
                 size = new BigDecimal(sizeField.getText().trim());
             } catch (NumberFormatException e) {
-                errorLabel.setText("Ошибка");
+                errorLabel.setText("Размер скидки должен быть числом");
                 event.consume();
                 return;
             }
             if (size.compareTo(BigDecimal.ZERO) < 0 || size.compareTo(new BigDecimal("100")) > 0) {
-                errorLabel.setText("Ошибка");
+                errorLabel.setText("Размер скидки должен быть от 0 до 100%");
                 event.consume();
             }
         });
