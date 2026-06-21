@@ -11,7 +11,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -132,6 +134,30 @@ public class DealController {
             e.printStackTrace();
         }
     }
+    @FXML
+    private void handleGoToProvidedServices() {
+
+        try {
+
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/ProvidedServiceView.fxml")
+            );
+
+            Scene scene = new Scene(loader.load());
+
+            Stage stage =
+                    (Stage) dealTable.getScene().getWindow();
+
+            stage.setScene(scene);
+            stage.setMaximized(true);
+
+        } catch (Exception e) {
+
+            statusLabel.setText("Ошибка перехода");
+            e.printStackTrace();
+        }
+    }
+
 
     private Dialog<Deal> buildDialog(Deal existing) {
         Dialog<Deal> dialog = new Dialog<>();

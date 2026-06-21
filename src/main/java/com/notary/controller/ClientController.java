@@ -11,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.notary.model.User;
 
 public class ClientController {
 
@@ -115,6 +116,22 @@ public class ClientController {
     }
 
     @FXML
+    private void handleGoToProvidedServices() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/ProvidedServiceView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка открытия экрана оказанных услуг");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     private void handleGoToServices() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -160,6 +177,75 @@ public class ClientController {
             statusLabel.setText("Ошибка открытия экрана пользователей");
             e.printStackTrace();
         }
+    }
+    @FXML
+    private void handleMyProfile() {
+        User currentUser = SessionManager.getCurrentUser();
+        if (currentUser == null) return;
+
+        Dialog<User> dialog = new Dialog<>();
+        dialog.setTitle("Мой профиль");
+
+        ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
+
+        TextField loginField = new TextField(currentUser.getLogin());
+        PasswordField passwordField = new PasswordField();
+        TextField emailField = new TextField(currentUser.getEmail());
+        TextField phoneField = new TextField(currentUser.getPhone());
+
+        passwordField.setPromptText("Новый пароль (оставьте пустым чтобы не менять)");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
+
+        VBox box = new VBox(8,
+                new Label("Логин:"), loginField,
+                new Label("Новый пароль:"), passwordField,
+                new Label("Email:"), emailField,
+                new Label("Телефон:"), phoneField,
+                errorLabel
+        );
+        box.setStyle("-fx-padding: 16;");
+        dialog.getDialogPane().setContent(box);
+
+        java.util.regex.Pattern PASSWORD_PATTERN =
+                java.util.regex.Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
+
+        dialog.setResultConverter(btn -> {
+            if (btn == saveBtn) {
+                String newPassword = passwordField.getText();
+                if (!newPassword.isEmpty() && !PASSWORD_PATTERN.matcher(newPassword).matches()) {
+                    errorLabel.setText("Пароль: 8+ символов, цифра, заглавная, спецсимвол");
+                    return null;
+                }
+                String passwordHash = newPassword.isEmpty()
+                        ? currentUser.getPasswordHash()
+                        : newPassword;
+
+                return new User(
+                        currentUser.getId(),
+                        loginField.getText(),
+                        passwordHash,
+                        emailField.getText(),
+                        phoneField.getText(),
+                        currentUser.getRegistrationDate(),
+                        currentUser.getIdRole()
+                );
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(user -> {
+            try {
+                new com.notary.dao.UserDAO().update(user);
+                SessionManager.setCurrentUser(user);
+                statusLabel.setText("Профиль обновлён");
+            } catch (Exception e) {
+                statusLabel.setText("Ошибка сохранения профиля");
+                e.printStackTrace();
+            }
+        });
     }
 
     @FXML

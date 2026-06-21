@@ -4,28 +4,27 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.notary.controller.DealController"
+      fx:controller="com.notary.controller.ProvidedServiceController"
       spacing="12">
 
-    <Label text="Сделки"/>
+    <Label text="Оказанные услуги"/>
 
     <HBox spacing="8">
-        <Button text="←Клиенты" onAction="#handleGoToClients"/>
-        <Button text="Оказанные услуги→"
-                onAction="#handleGoToProvidedServices"/>
+        <Button text="← Назад" onAction="#handleGoToClients"/>
         <Button text="Добавить" onAction="#handleAdd"/>
         <Button text="Редактировать" onAction="#handleEdit"/>
         <Button text="Удалить" onAction="#handleDelete"/>
         <Button text="Выйти" onAction="#handleLogout"/>
     </HBox>
 
-    <TableView fx:id="dealTable" VBox.vgrow="ALWAYS">
+    <TableView fx:id="providedServiceTable" VBox.vgrow="ALWAYS">
         <columns>
             <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
-            <TableColumn fx:id="colClient" text="ID клиента" prefWidth="100"/>
+            <TableColumn fx:id="colDeal" text="ID сделки" prefWidth="100"/>
+            <TableColumn fx:id="colService" text="ID услуги" prefWidth="100"/>
+            <TableColumn fx:id="colDiscount" text="ID скидки" prefWidth="100"/>
             <TableColumn fx:id="colDate" text="Дата" prefWidth="160"/>
-            <TableColumn fx:id="colAmount" text="Сумма" prefWidth="120"/>
-            <TableColumn fx:id="colCommission" text="Комиссия" prefWidth="120"/>
+            <TableColumn fx:id="colPrice" text="Итоговая стоимость" prefWidth="150"/>
         </columns>
     </TableView>
 
