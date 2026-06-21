@@ -14,6 +14,8 @@
         <Button text="Редактировать" onAction="#handleEdit"/>
         <Button text="Удалить" onAction="#handleDelete"/>
         <Button text="Сделки →" onAction="#handleGoToDeals"/>
+        <Button text="Услуги" onAction="#handleGoToServices"/>
+        <Button text="Скидки" onAction="#handleGoToDiscounts"/>
         <Button fx:id="btnUsers" text="Пользователи" onAction="#handleGoToUsers"/>
         <Button text="Выйти" onAction="#handleLogout"/>
     </HBox>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.notary.controller.ServiceController"
+      spacing="12">
+
+    <Label text="Услуги"/>
+
+    <HBox spacing="8">
+        <Button text="Назад" onAction="#handleGoToClients"/>
+        <Button fx:id="btnAdd" text="Добавить" onAction="#handleAdd"/>
+        <Button fx:id="btnEdit" text="Редактировать" onAction="#handleEdit"/>
+        <Button fx:id="btnDelete" text="Удалить" onAction="#handleDelete"/>
+        <Button text="Выйти" onAction="#handleLogout"/>
+    </HBox>
+
+    <TableView fx:id="serviceTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+            <TableColumn fx:id="colName" text="Название" prefWidth="200"/>
+            <TableColumn fx:id="colDescription" text="Описание" prefWidth="250"/>
+            <TableColumn fx:id="colPrice" text="Базовая цена" prefWidth="120"/>
+        </columns>
+    </TableView>
+
+    <Label fx:id="statusLabel"/>
+
+</VBox>

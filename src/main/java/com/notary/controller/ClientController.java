@@ -115,6 +115,38 @@ public class ClientController {
     }
 
     @FXML
+    private void handleGoToServices() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/ServiceView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка открытия экрана услуг");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleGoToDiscounts() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/DiscountView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка открытия экрана скидок");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     private void handleGoToUsers() {
         try {
             FXMLLoader loader = new FXMLLoader(

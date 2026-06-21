@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.notary.controller.DiscountController"
+      spacing="12">
+
+    <Label text="Скидки"/>
+
+    <HBox spacing="8">
+        <Button text="← Назад" onAction="#handleGoToClients"/>
+        <Button fx:id="btnAdd" text="Добавить" onAction="#handleAdd"/>
+        <Button fx:id="btnEdit" text="Редактировать" onAction="#handleEdit"/>
+        <Button fx:id="btnDelete" text="Удалить" onAction="#handleDelete"/>
+        <Button text="Выйти" onAction="#handleLogout"/>
+    </HBox>
+
+    <TableView fx:id="discountTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+            <TableColumn fx:id="colType" text="Тип скидки" prefWidth="180"/>
+            <TableColumn fx:id="colSize" text="Размер (%)" prefWidth="100"/>
+            <TableColumn fx:id="colConditions" text="Условия" prefWidth="300"/>
+        </columns>
+    </TableView>
+
+    <Label fx:id="statusLabel"/>
+
+</VBox>
