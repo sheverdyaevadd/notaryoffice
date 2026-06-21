@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import com.notary.util.SessionManager;
 
 public class LoginController {
 
@@ -29,6 +30,7 @@ public class LoginController {
         try {
             User user = authService.login(login, password);
             if (user != null) {
+                SessionManager.setCurrentUser(user);
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/view/ClientView.fxml")
                 );

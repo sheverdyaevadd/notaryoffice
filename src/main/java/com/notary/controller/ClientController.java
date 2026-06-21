@@ -2,11 +2,15 @@ package com.notary.controller;
 
 import com.notary.dao.ClientDAO;
 import com.notary.model.Client;
+import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class ClientController {
 
@@ -17,6 +21,7 @@ public class ClientController {
     @FXML private TableColumn<Client, String> colAddress;
     @FXML private TableColumn<Client, String> colPhone;
     @FXML private Label statusLabel;
+    @FXML private Button btnUsers;
 
     private final ClientDAO clientDAO = new ClientDAO();
     private ObservableList<Client> clientList = FXCollections.observableArrayList();
@@ -33,6 +38,8 @@ public class ClientController {
                 new javafx.beans.property.SimpleStringProperty(data.getValue().getAddress()));
         colPhone.setCellValueFactory(data ->
                 new javafx.beans.property.SimpleStringProperty(data.getValue().getPhone()));
+
+        btnUsers.setVisible(SessionManager.isSuperAdmin());
 
         loadClients();
     }
@@ -89,6 +96,38 @@ public class ClientController {
             loadClients();
         } catch (Exception e) {
             statusLabel.setText("Ошибка удаления");
+        }
+    }
+
+    @FXML
+    private void handleGoToDeals() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/DealView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка открытия экрана сделок");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleGoToUsers() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/UserView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка открытия экрана пользователей");
+            e.printStackTrace();
         }
     }
 
