@@ -15,6 +15,7 @@
         <Button text="Удалить" onAction="#handleDelete"/>
         <Button text="Сделки →" onAction="#handleGoToDeals"/>
         <Button fx:id="btnUsers" text="Пользователи" onAction="#handleGoToUsers"/>
+        <Button text="Выйти" onAction="#handleLogout"/>
     </HBox>
 
     <TableView fx:id="clientTable" VBox.vgrow="ALWAYS">

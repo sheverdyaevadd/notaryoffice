@@ -3,6 +3,7 @@ package com.notary.controller;
 import com.notary.dao.UserDAO;
 import com.notary.model.Role;
 import com.notary.model.User;
+import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -136,6 +137,23 @@ public class UserController {
         }
     }
 
+    @FXML
+    private void handleLogout() {
+        try {
+            SessionManager.setCurrentUser(null);
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/LoginView.fxml")
+            );
+            Scene scene = new Scene(loader.load(), 800, 600);
+            Stage stage = (Stage) userTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка выхода");
+            e.printStackTrace();
+        }
+    }
+
     private Dialog<User> buildDialog(User existing) {
         Dialog<User> dialog = new Dialog<>();
         dialog.setTitle(existing == null ? "Добавить пользователя" : "Редактировать пользователя");
@@ -182,18 +200,15 @@ public class UserController {
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
                 String password = passwordField.getText();
-
                 if (existing == null && !PASSWORD_PATTERN.matcher(password).matches()) {
-                    errorLabel.setText("Пароль должен содержать 8+ символов, цифру, заглавную букву и спецсимвол");
+                    errorLabel.setText("Пароль: 8+ символов, цифра, заглавная, спецсимвол");
                     return null;
                 }
-
                 Role selectedRole = roleCombo.getValue();
                 if (selectedRole == null) {
                     errorLabel.setText("Выберите роль");
                     return null;
                 }
-
                 String passwordHash = password.isEmpty() && existing != null
                         ? existing.getPasswordHash()
                         : password;

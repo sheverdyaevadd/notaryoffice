@@ -2,16 +2,19 @@ package com.notary.controller;
 
 import com.notary.dao.DealDAO;
 import com.notary.model.Deal;
+import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 public class DealController {
 
     @FXML private TableView<Deal> dealTable;
@@ -96,6 +99,7 @@ public class DealController {
             statusLabel.setText("Ошибка удаления");
         }
     }
+
     @FXML
     private void handleGoToClients() {
         try {
@@ -111,6 +115,24 @@ public class DealController {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    private void handleLogout() {
+        try {
+            SessionManager.setCurrentUser(null);
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/LoginView.fxml")
+            );
+            Scene scene = new Scene(loader.load(), 800, 600);
+            Stage stage = (Stage) dealTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка выхода");
+            e.printStackTrace();
+        }
+    }
+
     private Dialog<Deal> buildDialog(Deal existing) {
         Dialog<Deal> dialog = new Dialog<>();
         dialog.setTitle(existing == null ? "Добавить сделку" : "Редактировать сделку");

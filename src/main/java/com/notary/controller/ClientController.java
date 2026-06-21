@@ -40,7 +40,6 @@ public class ClientController {
                 new javafx.beans.property.SimpleStringProperty(data.getValue().getPhone()));
 
         btnUsers.setVisible(SessionManager.isSuperAdmin());
-
         loadClients();
     }
 
@@ -127,6 +126,23 @@ public class ClientController {
             stage.setMaximized(true);
         } catch (Exception e) {
             statusLabel.setText("Ошибка открытия экрана пользователей");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleLogout() {
+        try {
+            SessionManager.setCurrentUser(null);
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/LoginView.fxml")
+            );
+            Scene scene = new Scene(loader.load(), 800, 600);
+            Stage stage = (Stage) clientTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка выхода");
             e.printStackTrace();
         }
     }
