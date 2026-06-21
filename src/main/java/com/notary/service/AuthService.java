@@ -2,6 +2,7 @@ package com.notary.service;
 
 import com.notary.dao.UserDAO;
 import com.notary.model.User;
+import com.notary.util.PasswordHasher;
 
 import java.sql.SQLException;
 
@@ -14,7 +15,7 @@ public class AuthService {
 
         if (user == null) return null;
 
-        if (user.getPasswordHash().equals(password)) {
+        if (PasswordHasher.verify(password, user.getPasswordHash())) {
             return user;
         }
 

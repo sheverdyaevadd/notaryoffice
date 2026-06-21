@@ -151,16 +151,40 @@ public class DiscountController {
         sizeField.setPromptText("Размер (%)");
         conditionsField.setPromptText("Условия");
 
-        VBox box = new VBox(8, typeField, sizeField, conditionsField);
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
+
+        VBox box = new VBox(8, typeField, sizeField, conditionsField, errorLabel);
         box.setStyle("-fx-padding: 16;");
         dialog.getDialogPane().setContent(box);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (typeField.getText().trim().isEmpty()) {
+                errorLabel.setText("Укажите тип скидки");
+                event.consume();
+                return;
+            }
+            BigDecimal size;
+            try {
+                size = new BigDecimal(sizeField.getText().trim());
+            } catch (NumberFormatException e) {
+                errorLabel.setText("Ошибка");
+                event.consume();
+                return;
+            }
+            if (size.compareTo(BigDecimal.ZERO) < 0 || size.compareTo(new BigDecimal("100")) > 0) {
+                errorLabel.setText("Ошибка");
+                event.consume();
+            }
+        });
 
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
                 return new Discount(
                         existing != null ? existing.getId() : 0,
-                        typeField.getText(),
-                        new BigDecimal(sizeField.getText()),
+                        typeField.getText().trim(),
+                        new BigDecimal(sizeField.getText().trim()),
                         conditionsField.getText()
                 );
             }

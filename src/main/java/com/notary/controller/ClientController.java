@@ -4,6 +4,7 @@ import com.notary.dao.ClientDAO;
 import com.notary.dao.UserDAO;
 import com.notary.model.Client;
 import com.notary.model.User;
+import com.notary.util.PasswordHasher;
 import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -201,6 +202,8 @@ public class ClientController {
 
         Dialog<User> dialog = new Dialog<>();
         dialog.setTitle("Мой профиль");
+        dialog.getDialogPane().setMinWidth(420);
+        dialog.getDialogPane().setPrefWidth(420);
 
         ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
@@ -213,7 +216,14 @@ public class ClientController {
         passwordField.setPromptText("Новый пароль (оставьте пустым чтобы не менять)");
 
         Label errorLabel = new Label();
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+        errorLabel.setMaxWidth(Double.MAX_VALUE);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
 
         VBox box = new VBox(8,
                 new Label("Логин:"), loginField,
@@ -223,18 +233,34 @@ public class ClientController {
                 errorLabel
         );
         box.setStyle("-fx-padding: 16;");
+        box.setPrefWidth(390);
         dialog.getDialogPane().setContent(box);
+
+        String defaultPasswordFieldStyle = passwordField.getStyle();
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String newPassword = passwordField.getText();
+            if (!newPassword.isEmpty() && !PASSWORD_PATTERN.matcher(newPassword).matches()) {
+                errorLabel.setText("Пароль слишком слабый: нужно 8+ символов, цифра, заглавная буква и спецсимвол (!@#$%^&*)");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                passwordField.setStyle(defaultPasswordFieldStyle +
+                        "-fx-border-color: #e74c3c; -fx-border-width: 2; -fx-border-radius: 4;");
+                event.consume();
+            } else {
+                errorLabel.setVisible(false);
+                errorLabel.setManaged(false);
+                passwordField.setStyle(defaultPasswordFieldStyle);
+            }
+        });
 
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
                 String newPassword = passwordField.getText();
-                if (!newPassword.isEmpty() && !PASSWORD_PATTERN.matcher(newPassword).matches()) {
-                    errorLabel.setText("Пароль: 8+ символов, цифра, заглавная, спецсимвол");
-                    return null;
-                }
                 String passwordHash = newPassword.isEmpty()
                         ? currentUser.getPasswordHash()
-                        : newPassword;
+                        : PasswordHasher.hash(newPassword);
 
                 return new User(
                         currentUser.getId(),

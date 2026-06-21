@@ -2,6 +2,7 @@ package com.notary.controller;
 
 import com.notary.dao.UserDAO;
 import com.notary.model.User;
+import com.notary.util.PasswordHasher;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -31,31 +32,42 @@ public class RegisterController {
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
 
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+
         if (login.isEmpty() || password.isEmpty() || email.isEmpty()) {
-            errorLabel.setText("Заполните все обязательные поля");
+            errorLabel.setText("⚠ Заполните все обязательные поля");
             return;
         }
 
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
-            errorLabel.setText("Пароль: 8+ символов, цифра, заглавная, спецсимвол");
+            errorLabel.setText("⚠ Пароль слишком слабый: нужно 8+ символов, цифра, заглавная буква и спецсимвол (!@#$%^&*)");
             return;
         }
 
         try {
             User existing = userDAO.findByLogin(login);
             if (existing != null) {
-                errorLabel.setText("Логин уже занят");
+                errorLabel.setText("⚠ Логин уже занят");
                 return;
             }
 
+            String passwordHash = PasswordHasher.hash(password);
+
             User newUser = new User(
-                    0, login, password, email, phone,
+                    0, login, passwordHash, email, phone,
                     LocalDateTime.now(), 2
             );
 
             userDAO.add(newUser);
 
-            errorLabel.setStyle("-fx-text-fill: green;");
+            errorLabel.setStyle(
+                    "-fx-text-fill: #1e7e34; -fx-font-size: 13; -fx-font-weight: bold;" +
+                            "-fx-background-color: #e6f4ea; -fx-padding: 6 10; -fx-background-radius: 4;"
+            );
             errorLabel.setText("Регистрация успешна! Войдите в систему.");
 
         } catch (Exception e) {

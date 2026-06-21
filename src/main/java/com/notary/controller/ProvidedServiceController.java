@@ -1,8 +1,10 @@
 package com.notary.controller;
 
+import com.notary.dao.DealDAO;
 import com.notary.dao.DiscountDAO;
 import com.notary.dao.ProvidedServiceDAO;
 import com.notary.dao.ServiceDAO;
+import com.notary.model.Deal;
 import com.notary.model.Discount;
 import com.notary.model.ProvidedService;
 import com.notary.model.Service;
@@ -19,6 +21,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,9 +43,11 @@ public class ProvidedServiceController {
     private final ProvidedServiceDAO providedServiceDAO = new ProvidedServiceDAO();
     private final ServiceDAO serviceDAO = new ServiceDAO();
     private final DiscountDAO discountDAO = new DiscountDAO();
+    private final DealDAO dealDAO = new DealDAO();
     private final ObservableList<ProvidedService> providedServiceList = FXCollections.observableArrayList();
     private List<Service> services;
     private List<Discount> discounts;
+    private List<Deal> deals;
 
     @FXML
     public void initialize() {
@@ -69,6 +75,7 @@ public class ProvidedServiceController {
         try {
             services = serviceDAO.findAll();
             discounts = discountDAO.findAll();
+            deals = dealDAO.findAll();
         } catch (Exception e) {
             statusLabel.setText("Ошибка загрузки справочников");
         }
@@ -87,6 +94,22 @@ public class ProvidedServiceController {
 
     @FXML
     private void handleAdd() {
+        try {
+            services = serviceDAO.findAll();
+            discounts = discountDAO.findAll();
+            deals = dealDAO.findAll();
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка загрузки справочников");
+            return;
+        }
+        if (deals.isEmpty()) {
+            statusLabel.setText("Сначала создайте хотя бы одну сделку");
+            return;
+        }
+        if (services.isEmpty()) {
+            statusLabel.setText("Сначала добавьте хотя бы одну услугу");
+            return;
+        }
         Dialog<ProvidedService> dialog = buildDialog(null);
         dialog.showAndWait().ifPresent(ps -> {
             try {
@@ -104,6 +127,14 @@ public class ProvidedServiceController {
         ProvidedService selected = providedServiceTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             statusLabel.setText("Выберите запись");
+            return;
+        }
+        try {
+            services = serviceDAO.findAll();
+            discounts = discountDAO.findAll();
+            deals = dealDAO.findAll();
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка загрузки справочников");
             return;
         }
         Dialog<ProvidedService> dialog = buildDialog(selected);
@@ -167,6 +198,22 @@ public class ProvidedServiceController {
         }
     }
 
+    /**
+     * Итоговая стоимость = базовая цена услуги * (1 - размер скидки / 100).
+     * Если скидка не выбрана — итоговая стоимость равна базовой цене услуги.
+     */
+    private BigDecimal calculateFinalPrice(Service service, Discount discount) {
+        if (service == null) return BigDecimal.ZERO;
+        BigDecimal basePrice = service.getBasePrice();
+        if (discount == null) {
+            return basePrice.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal discountFraction = discount.getDiscountSize()
+                .divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        BigDecimal multiplier = BigDecimal.ONE.subtract(discountFraction);
+        return basePrice.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
+    }
+
     private Dialog<ProvidedService> buildDialog(ProvidedService existing) {
         Dialog<ProvidedService> dialog = new Dialog<>();
         dialog.setTitle(existing == null ? "Добавить оказанную услугу" : "Редактировать");
@@ -174,75 +221,133 @@ public class ProvidedServiceController {
         ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
 
-        TextField dealIdField = new TextField(existing != null ? String.valueOf(existing.getIdDeal()) : "");
-        dealIdField.setPromptText("ID сделки");
+        ComboBox<Deal> dealCombo = new ComboBox<>();
+        dealCombo.getItems().addAll(deals);
+        dealCombo.setCellFactory(lv -> new ListCell<>() {
+            protected void updateItem(Deal d, boolean empty) {
+                super.updateItem(d, empty);
+                setText(empty || d == null ? "" : "Сделка №" + d.getId() + " (клиент " + d.getIdClient() + ")");
+            }
+        });
+        dealCombo.setButtonCell(new ListCell<>() {
+            protected void updateItem(Deal d, boolean empty) {
+                super.updateItem(d, empty);
+                setText(empty || d == null ? "" : "Сделка №" + d.getId() + " (клиент " + d.getIdClient() + ")");
+            }
+        });
+        if (existing != null) {
+            deals.stream().filter(d -> d.getId() == existing.getIdDeal())
+                    .findFirst().ifPresent(dealCombo::setValue);
+        }
 
         ComboBox<Service> serviceCombo = new ComboBox<>();
-        if (services != null) serviceCombo.getItems().addAll(services);
+        serviceCombo.getItems().addAll(services);
         serviceCombo.setCellFactory(lv -> new ListCell<>() {
             protected void updateItem(Service s, boolean empty) {
                 super.updateItem(s, empty);
-                setText(empty || s == null ? "" : s.getId() + " — " + s.getServiceName());
+                setText(empty || s == null ? "" : s.getId() + " — " + s.getServiceName() + " (" + s.getBasePrice() + ")");
             }
         });
         serviceCombo.setButtonCell(new ListCell<>() {
             protected void updateItem(Service s, boolean empty) {
                 super.updateItem(s, empty);
-                setText(empty || s == null ? "" : s.getId() + " — " + s.getServiceName());
+                setText(empty || s == null ? "" : s.getId() + " — " + s.getServiceName() + " (" + s.getBasePrice() + ")");
             }
         });
-        if (existing != null && services != null) {
+        if (existing != null) {
             services.stream().filter(s -> s.getId() == existing.getIdService())
                     .findFirst().ifPresent(serviceCombo::setValue);
         }
 
         ComboBox<Discount> discountCombo = new ComboBox<>();
         discountCombo.getItems().add(null);
-        if (discounts != null) discountCombo.getItems().addAll(discounts);
+        discountCombo.getItems().addAll(discounts);
         discountCombo.setCellFactory(lv -> new ListCell<>() {
             protected void updateItem(Discount d, boolean empty) {
                 super.updateItem(d, empty);
-                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType());
+                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType() + " (" + d.getDiscountSize() + "%)");
             }
         });
         discountCombo.setButtonCell(new ListCell<>() {
             protected void updateItem(Discount d, boolean empty) {
                 super.updateItem(d, empty);
-                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType());
+                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType() + " (" + d.getDiscountSize() + "%)");
             }
         });
-        if (existing != null && existing.getIdDiscount() != null && discounts != null) {
+        if (existing != null && existing.getIdDiscount() != null) {
             discounts.stream().filter(d -> d.getId() == existing.getIdDiscount())
                     .findFirst().ifPresent(discountCombo::setValue);
         }
 
-        TextField priceField = new TextField(existing != null ? String.valueOf(existing.getFinalPrice()) : "");
-        priceField.setPromptText("Итоговая стоимость");
+        Label priceLabel = new Label("Итоговая стоимость: —");
+        priceLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #222;");
+
+        Runnable recalc = () -> {
+            Service s = serviceCombo.getValue();
+            Discount d = discountCombo.getValue();
+            BigDecimal price = calculateFinalPrice(s, d);
+            priceLabel.setText("Итоговая стоимость: " + price);
+        };
+        serviceCombo.setOnAction(e -> recalc.run());
+        discountCombo.setOnAction(e -> recalc.run());
+        recalc.run();
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
 
         VBox box = new VBox(8,
-                new Label("ID сделки:"), dealIdField,
+                new Label("Сделка:"), dealCombo,
                 new Label("Услуга:"), serviceCombo,
                 new Label("Скидка:"), discountCombo,
-                new Label("Итоговая стоимость:"), priceField
+                priceLabel,
+                errorLabel
         );
         box.setStyle("-fx-padding: 16;");
         dialog.getDialogPane().setContent(box);
 
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (dealCombo.getValue() == null) {
+                errorLabel.setText("⚠ Выберите сделку");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            if (serviceCombo.getValue() == null) {
+                errorLabel.setText("⚠ Выберите услугу");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+                return;
+            }
+            errorLabel.setVisible(false);
+            errorLabel.setManaged(false);
+        });
+
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
+                Deal selectedDeal = dealCombo.getValue();
                 Service selectedService = serviceCombo.getValue();
-                if (selectedService == null) return null;
+                if (selectedDeal == null || selectedService == null) return null;
 
                 Discount selectedDiscount = discountCombo.getValue();
                 Integer discountId = selectedDiscount != null ? selectedDiscount.getId() : null;
+                BigDecimal finalPrice = calculateFinalPrice(selectedService, selectedDiscount);
 
                 return new ProvidedService(
                         existing != null ? existing.getId() : 0,
-                        Integer.parseInt(dealIdField.getText()),
+                        selectedDeal.getId(),
                         selectedService.getId(),
                         discountId,
-                        LocalDateTime.now(),
-                        Double.parseDouble(priceField.getText())
+                        existing != null ? existing.getServiceDate() : LocalDateTime.now(),
+                        finalPrice.doubleValue()
                 );
             }
             return null;

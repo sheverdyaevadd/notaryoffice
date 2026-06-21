@@ -1,6 +1,8 @@
 package com.notary.controller;
 
+import com.notary.dao.ClientDAO;
 import com.notary.dao.DealDAO;
+import com.notary.model.Client;
 import com.notary.model.Deal;
 import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
@@ -14,6 +16,7 @@ import javafx.stage.Stage;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class DealController {
 
@@ -29,7 +32,9 @@ public class DealController {
     @FXML private Button btnDelete;
 
     private final DealDAO dealDAO = new DealDAO();
+    private final ClientDAO clientDAO = new ClientDAO();
     private final ObservableList<Deal> dealList = FXCollections.observableArrayList();
+    private List<Client> clients;
 
     @FXML
     public void initialize() {
@@ -50,6 +55,12 @@ public class DealController {
         btnEdit.setVisible(canEdit);
         btnDelete.setVisible(canEdit);
 
+        try {
+            clients = clientDAO.findAll();
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка загрузки списка клиентов");
+        }
+
         loadDeals();
     }
 
@@ -64,13 +75,24 @@ public class DealController {
 
     @FXML
     private void handleAdd() {
+        try {
+            clients = clientDAO.findAll();
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка загрузки списка клиентов");
+            return;
+        }
+        if (clients.isEmpty()) {
+            statusLabel.setText("Сначала добавьте хотя бы одного клиента");
+            return;
+        }
         Dialog<Deal> dialog = buildDialog(null);
         dialog.showAndWait().ifPresent(deal -> {
             try {
                 dealDAO.add(deal);
                 loadDeals();
             } catch (Exception e) {
-                statusLabel.setText("Ошибка добавления");
+                statusLabel.setText("Ошибка добавления: " + e.getMessage());
+                e.printStackTrace();
             }
         });
     }
@@ -82,13 +104,20 @@ public class DealController {
             statusLabel.setText("Выберите сделку");
             return;
         }
+        try {
+            clients = clientDAO.findAll();
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка загрузки списка клиентов");
+            return;
+        }
         Dialog<Deal> dialog = buildDialog(selected);
         dialog.showAndWait().ifPresent(deal -> {
             try {
                 dealDAO.update(deal);
                 loadDeals();
             } catch (Exception e) {
-                statusLabel.setText("Ошибка редактирования");
+                statusLabel.setText("Ошибка редактирования: " + e.getMessage());
+                e.printStackTrace();
             }
         });
     }
@@ -164,27 +193,86 @@ public class DealController {
         ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
 
-        TextField clientIdField = new TextField(existing != null ? String.valueOf(existing.getIdClient()) : "");
-        TextField amountField = new TextField(existing != null ? existing.getTotalAmount().toString() : "");
+        ComboBox<Client> clientCombo = new ComboBox<>();
+        clientCombo.getItems().addAll(clients);
+        clientCombo.setCellFactory(lv -> new ListCell<>() {
+            protected void updateItem(Client c, boolean empty) {
+                super.updateItem(c, empty);
+                setText(empty || c == null ? "" : c.getId() + " — " + c.getName());
+            }
+        });
+        clientCombo.setButtonCell(new ListCell<>() {
+            protected void updateItem(Client c, boolean empty) {
+                super.updateItem(c, empty);
+                setText(empty || c == null ? "" : c.getId() + " — " + c.getName());
+            }
+        });
+        if (existing != null) {
+            clients.stream().filter(c -> c.getId() == existing.getIdClient())
+                    .findFirst().ifPresent(clientCombo::setValue);
+        }
 
-        clientIdField.setPromptText("ID клиента");
-        amountField.setPromptText("Сумма");
+        Label amountInfoLabel = new Label();
+        amountInfoLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #555;");
+        if (existing != null) {
+            amountInfoLabel.setText("Текущая сумма сделки: " + existing.getTotalAmount()
+                    + " (формируется автоматически из оказанных услуг)");
+        } else {
+            amountInfoLabel.setText("Сделка будет создана с нулевой суммой. " +
+                    "Сумма сложится автоматически, когда вы добавите оказанные услуги по этой сделке.");
+        }
+        amountInfoLabel.setWrapText(true);
+        amountInfoLabel.setMaxWidth(320);
 
-        VBox box = new VBox(8, clientIdField, amountField);
+        Label errorLabel = new Label();
+        errorLabel.setStyle(
+                "-fx-text-fill: #e74c3c; -fx-font-size: 13; -fx-font-weight: bold;" +
+                        "-fx-background-color: #fdecea; -fx-padding: 6 10; -fx-background-radius: 4;"
+        );
+        errorLabel.setWrapText(true);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+
+        VBox box = new VBox(8,
+                new Label("Клиент:"), clientCombo,
+                amountInfoLabel,
+                errorLabel
+        );
         box.setStyle("-fx-padding: 16;");
         dialog.getDialogPane().setContent(box);
 
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveBtn);
+        saveButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (clientCombo.getValue() == null) {
+                errorLabel.setText("Выберите клиента");
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
+                event.consume();
+            }
+        });
+
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
-                BigDecimal amount = new BigDecimal(amountField.getText());
-                BigDecimal commission = amount.multiply(new BigDecimal("0.20"));
-                return new Deal(
-                        existing != null ? existing.getId() : 0,
-                        Integer.parseInt(clientIdField.getText()),
-                        LocalDateTime.now(),
-                        amount,
-                        commission
-                );
+                Client selectedClient = clientCombo.getValue();
+                if (selectedClient == null) return null;
+
+                if (existing == null) {
+                    return new Deal(
+                            0,
+                            selectedClient.getId(),
+                            LocalDateTime.now(),
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO
+                    );
+                } else {
+                    return new Deal(
+                            existing.getId(),
+                            selectedClient.getId(),
+                            existing.getDealDate(),
+                            existing.getTotalAmount(),
+                            existing.getCommission()
+                    );
+                }
             }
             return null;
         });
