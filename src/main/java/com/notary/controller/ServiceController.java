@@ -40,7 +40,6 @@ public class ServiceController {
         colPrice.setCellValueFactory(data ->
                 new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getBasePrice()));
 
-        // оператор не может добавлять/редактировать/удалять услуги
         boolean canManage = SessionManager.canManageServiceTypes();
         btnAdd.setVisible(canManage);
         btnEdit.setVisible(canManage);

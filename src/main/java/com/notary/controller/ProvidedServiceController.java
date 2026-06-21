@@ -32,6 +32,9 @@ public class ProvidedServiceController {
     @FXML private TableColumn<ProvidedService, String> colDate;
     @FXML private TableColumn<ProvidedService, Double> colPrice;
     @FXML private Label statusLabel;
+    @FXML private Button btnAdd;
+    @FXML private Button btnEdit;
+    @FXML private Button btnDelete;
 
     private final ProvidedServiceDAO providedServiceDAO = new ProvidedServiceDAO();
     private final ServiceDAO serviceDAO = new ServiceDAO();
@@ -57,6 +60,11 @@ public class ProvidedServiceController {
                 new SimpleStringProperty(data.getValue().getServiceDate().toString()));
         colPrice.setCellValueFactory(data ->
                 new SimpleDoubleProperty(data.getValue().getFinalPrice()).asObject());
+
+        boolean canEdit = SessionManager.canEdit();
+        btnAdd.setVisible(canEdit);
+        btnEdit.setVisible(canEdit);
+        btnDelete.setVisible(canEdit);
 
         try {
             services = serviceDAO.findAll();

@@ -1,7 +1,9 @@
 package com.notary.controller;
 
 import com.notary.dao.ClientDAO;
+import com.notary.dao.UserDAO;
 import com.notary.model.Client;
+import com.notary.model.User;
 import com.notary.util.SessionManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,7 +13,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import com.notary.model.User;
+
+import java.util.regex.Pattern;
 
 public class ClientController {
 
@@ -23,9 +26,15 @@ public class ClientController {
     @FXML private TableColumn<Client, String> colPhone;
     @FXML private Label statusLabel;
     @FXML private Button btnUsers;
+    @FXML private Button btnAdd;
+    @FXML private Button btnEdit;
+    @FXML private Button btnDelete;
 
     private final ClientDAO clientDAO = new ClientDAO();
     private ObservableList<Client> clientList = FXCollections.observableArrayList();
+
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
 
     @FXML
     public void initialize() {
@@ -41,6 +50,12 @@ public class ClientController {
                 new javafx.beans.property.SimpleStringProperty(data.getValue().getPhone()));
 
         btnUsers.setVisible(SessionManager.isSuperAdmin());
+
+        boolean canEdit = SessionManager.canEdit();
+        btnAdd.setVisible(canEdit);
+        btnEdit.setVisible(canEdit);
+        btnDelete.setVisible(canEdit);
+
         loadClients();
     }
 
@@ -178,6 +193,7 @@ public class ClientController {
             e.printStackTrace();
         }
     }
+
     @FXML
     private void handleMyProfile() {
         User currentUser = SessionManager.getCurrentUser();
@@ -192,7 +208,7 @@ public class ClientController {
         TextField loginField = new TextField(currentUser.getLogin());
         PasswordField passwordField = new PasswordField();
         TextField emailField = new TextField(currentUser.getEmail());
-        TextField phoneField = new TextField(currentUser.getPhone());
+        TextField phoneField = new TextField(currentUser.getPhone() != null ? currentUser.getPhone() : "");
 
         passwordField.setPromptText("Новый пароль (оставьте пустым чтобы не менять)");
 
@@ -208,9 +224,6 @@ public class ClientController {
         );
         box.setStyle("-fx-padding: 16;");
         dialog.getDialogPane().setContent(box);
-
-        java.util.regex.Pattern PASSWORD_PATTERN =
-                java.util.regex.Pattern.compile("^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$");
 
         dialog.setResultConverter(btn -> {
             if (btn == saveBtn) {
@@ -238,7 +251,7 @@ public class ClientController {
 
         dialog.showAndWait().ifPresent(user -> {
             try {
-                new com.notary.dao.UserDAO().update(user);
+                new UserDAO().update(user);
                 SessionManager.setCurrentUser(user);
                 statusLabel.setText("Профиль обновлён");
             } catch (Exception e) {

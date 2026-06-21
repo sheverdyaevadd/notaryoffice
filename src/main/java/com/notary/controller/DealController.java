@@ -11,9 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -26,6 +24,9 @@ public class DealController {
     @FXML private TableColumn<Deal, BigDecimal> colAmount;
     @FXML private TableColumn<Deal, BigDecimal> colCommission;
     @FXML private Label statusLabel;
+    @FXML private Button btnAdd;
+    @FXML private Button btnEdit;
+    @FXML private Button btnDelete;
 
     private final DealDAO dealDAO = new DealDAO();
     private final ObservableList<Deal> dealList = FXCollections.observableArrayList();
@@ -43,6 +44,11 @@ public class DealController {
                 new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getTotalAmount()));
         colCommission.setCellValueFactory(data ->
                 new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getCommission()));
+
+        boolean canEdit = SessionManager.canEdit();
+        btnAdd.setVisible(canEdit);
+        btnEdit.setVisible(canEdit);
+        btnDelete.setVisible(canEdit);
 
         loadDeals();
     }
@@ -119,6 +125,22 @@ public class DealController {
     }
 
     @FXML
+    private void handleGoToProvidedServices() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/view/ProvidedServiceView.fxml")
+            );
+            Scene scene = new Scene(loader.load());
+            Stage stage = (Stage) dealTable.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            statusLabel.setText("Ошибка перехода");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     private void handleLogout() {
         try {
             SessionManager.setCurrentUser(null);
@@ -134,30 +156,6 @@ public class DealController {
             e.printStackTrace();
         }
     }
-    @FXML
-    private void handleGoToProvidedServices() {
-
-        try {
-
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/view/ProvidedServiceView.fxml")
-            );
-
-            Scene scene = new Scene(loader.load());
-
-            Stage stage =
-                    (Stage) dealTable.getScene().getWindow();
-
-            stage.setScene(scene);
-            stage.setMaximized(true);
-
-        } catch (Exception e) {
-
-            statusLabel.setText("Ошибка перехода");
-            e.printStackTrace();
-        }
-    }
-
 
     private Dialog<Deal> buildDialog(Deal existing) {
         Dialog<Deal> dialog = new Dialog<>();

@@ -26,6 +26,10 @@ public class SessionManager {
         return currentUser != null && currentUser.getIdRole() == 2;
     }
 
+    public static boolean isWatcher() {
+        return currentUser != null && currentUser.getIdRole() == 4;
+    }
+
     public static boolean canManageUsers() {
         return isSuperAdmin();
     }
@@ -36,5 +40,9 @@ public class SessionManager {
 
     public static boolean canManageDiscountTypes() {
         return isSuperAdmin() || isAdmin();
+    }
+
+    public static boolean canEdit() {
+        return isSuperAdmin() || isAdmin() || isOperator();
     }
 }
