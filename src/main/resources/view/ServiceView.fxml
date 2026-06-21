@@ -10,7 +10,7 @@
     <Label text="Услуги"/>
 
     <HBox spacing="8">
-        <Button text="Назад" onAction="#handleGoToClients"/>
+        <Button text="←Назад" onAction="#handleGoToClients"/>
         <Button fx:id="btnAdd" text="Добавить" onAction="#handleAdd"/>
         <Button fx:id="btnEdit" text="Редактировать" onAction="#handleEdit"/>
         <Button fx:id="btnDelete" text="Удалить" onAction="#handleDelete"/>
