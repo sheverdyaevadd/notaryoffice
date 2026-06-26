@@ -6,7 +6,7 @@
 <StackPane xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.notary.controller.RegisterController">
 
-    <VBox alignment="CENTER" spacing="12">
+    <VBox alignment="CENTER" spacing="12" maxWidth="300">
 
         <Label text="Регистрация"/>
 

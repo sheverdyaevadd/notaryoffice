@@ -34,9 +34,10 @@ public class LoginController {
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/view/ClientView.fxml")
                 );
-                Scene scene = new Scene(loader.load(), 900, 600);
+                Scene scene = new Scene(loader.load());
                 Stage stage = (Stage) loginField.getScene().getWindow();
                 stage.setScene(scene);
+                stage.setMaximized(false);
                 stage.setMaximized(true);
             } else {
                 errorLabel.setText("Неверный логин или пароль");
