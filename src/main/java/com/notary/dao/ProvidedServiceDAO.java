@@ -4,35 +4,41 @@ import com.notary.database.DatabaseConnection;
 import com.notary.model.ProvidedService;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ProvidedServiceDAO {
 
     public List<ProvidedService> findAll() throws SQLException {
-        List<ProvidedService> list = new ArrayList<>();
-        String query = "SELECT ps.*, dps.id_discount " +
-                "FROM provided_services ps " +
-                "LEFT JOIN discount_provided_service dps ON ps.id = dps.id_provided_service";
-
+        String query = "SELECT * FROM provided_services ORDER BY id";
         Connection connection = DatabaseConnection.getInstance().getConnection();
         PreparedStatement statement = connection.prepareStatement(query);
         ResultSet rs = statement.executeQuery();
 
+        LinkedHashMap<Integer, ProvidedService> map = new LinkedHashMap<>();
         while (rs.next()) {
-            int discountId = rs.getInt("id_discount");
-            Integer idDiscount = rs.wasNull() ? null : discountId;
-
-            list.add(new ProvidedService(
-                    rs.getInt("id"),
+            int id = rs.getInt("id");
+            map.put(id, new ProvidedService(
+                    id,
                     rs.getInt("id_deal"),
                     rs.getInt("id_service"),
-                    idDiscount,
+                    new ArrayList<>(),
                     rs.getTimestamp("service_date").toLocalDateTime(),
                     rs.getDouble("final_price")
             ));
         }
-        return list;
+
+        String discQuery = "SELECT id_provided_service, id_discount FROM discount_provided_service";
+        PreparedStatement discStatement = connection.prepareStatement(discQuery);
+        ResultSet discRs = discStatement.executeQuery();
+        while (discRs.next()) {
+            int psId = discRs.getInt("id_provided_service");
+            int discId = discRs.getInt("id_discount");
+            if (map.containsKey(psId)) {
+                map.get(psId).getDiscountIds().add(discId);
+            }
+        }
+
+        return new ArrayList<>(map.values());
     }
 
     public int add(ProvidedService ps) throws SQLException {
@@ -52,10 +58,7 @@ public class ProvidedServiceDAO {
             generatedId = keys.getInt(1);
         }
 
-        if (ps.getIdDiscount() != null) {
-            addDiscount(generatedId, ps.getIdDiscount());
-        }
-
+        addDiscounts(generatedId, ps.getDiscountIds());
         return generatedId;
     }
 
@@ -71,10 +74,8 @@ public class ProvidedServiceDAO {
         statement.setInt(5, ps.getId());
         statement.executeUpdate();
 
-        deleteDiscount(ps.getId());
-        if (ps.getIdDiscount() != null) {
-            addDiscount(ps.getId(), ps.getIdDiscount());
-        }
+        deleteDiscounts(ps.getId());
+        addDiscounts(ps.getId(), ps.getDiscountIds());
     }
 
     public void delete(int id) throws SQLException {
@@ -85,16 +86,19 @@ public class ProvidedServiceDAO {
         statement.executeUpdate();
     }
 
-    private void addDiscount(int providedServiceId, int discountId) throws SQLException {
+    private void addDiscounts(int providedServiceId, List<Integer> discountIds) throws SQLException {
+        if (discountIds == null || discountIds.isEmpty()) return;
         String query = "INSERT INTO discount_provided_service (id_discount, id_provided_service) VALUES (?, ?)";
         Connection connection = DatabaseConnection.getInstance().getConnection();
         PreparedStatement statement = connection.prepareStatement(query);
-        statement.setInt(1, discountId);
-        statement.setInt(2, providedServiceId);
-        statement.executeUpdate();
+        for (int discountId : discountIds) {
+            statement.setInt(1, discountId);
+            statement.setInt(2, providedServiceId);
+            statement.executeUpdate();
+        }
     }
 
-    private void deleteDiscount(int providedServiceId) throws SQLException {
+    private void deleteDiscounts(int providedServiceId) throws SQLException {
         String query = "DELETE FROM discount_provided_service WHERE id_provided_service=?";
         Connection connection = DatabaseConnection.getInstance().getConnection();
         PreparedStatement statement = connection.prepareStatement(query);

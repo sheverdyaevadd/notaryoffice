@@ -24,7 +24,9 @@ import javafx.stage.Stage;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProvidedServiceController {
 
@@ -58,9 +60,10 @@ public class ProvidedServiceController {
         colService.setCellValueFactory(data ->
                 new SimpleIntegerProperty(data.getValue().getIdService()).asObject());
         colDiscount.setCellValueFactory(data -> {
-            Integer discountId = data.getValue().getIdDiscount();
-            if (discountId == null) return new SimpleStringProperty("—");
-            return new SimpleStringProperty(String.valueOf(discountId));
+            List<Integer> ids = data.getValue().getDiscountIds();
+            if (ids == null || ids.isEmpty()) return new SimpleStringProperty("—");
+            String joined = ids.stream().map(String::valueOf).collect(Collectors.joining(", "));
+            return new SimpleStringProperty(joined);
         });
         colDate.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getServiceDate().toString()));
@@ -198,14 +201,21 @@ public class ProvidedServiceController {
             e.printStackTrace();
         }
     }
-    private BigDecimal calculateFinalPrice(Service service, Discount discount) {
+
+    private BigDecimal calculateFinalPrice(Service service, List<Discount> selectedDiscounts) {
         if (service == null) return BigDecimal.ZERO;
         BigDecimal basePrice = service.getBasePrice();
-        if (discount == null) {
+        if (selectedDiscounts == null || selectedDiscounts.isEmpty()) {
             return basePrice.setScale(2, RoundingMode.HALF_UP);
         }
-        BigDecimal discountFraction = discount.getDiscountSize()
-                .divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        BigDecimal totalDiscount = selectedDiscounts.stream()
+                .map(Discount::getDiscountSize)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalDiscount.compareTo(new BigDecimal("100")) > 0) {
+            totalDiscount = new BigDecimal("100");
+        }
+        BigDecimal discountFraction = totalDiscount.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
         BigDecimal multiplier = BigDecimal.ONE.subtract(discountFraction);
         return basePrice.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
     }
@@ -216,6 +226,7 @@ public class ProvidedServiceController {
 
         ButtonType saveBtn = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
+
 
         ComboBox<Deal> dealCombo = new ComboBox<>();
         dealCombo.getItems().addAll(deals);
@@ -236,6 +247,7 @@ public class ProvidedServiceController {
                     .findFirst().ifPresent(dealCombo::setValue);
         }
 
+
         ComboBox<Service> serviceCombo = new ComboBox<>();
         serviceCombo.getItems().addAll(services);
         serviceCombo.setCellFactory(lv -> new ListCell<>() {
@@ -255,37 +267,37 @@ public class ProvidedServiceController {
                     .findFirst().ifPresent(serviceCombo::setValue);
         }
 
-        ComboBox<Discount> discountCombo = new ComboBox<>();
-        discountCombo.getItems().add(null);
-        discountCombo.getItems().addAll(discounts);
-        discountCombo.setCellFactory(lv -> new ListCell<>() {
+        ListView<Discount> discountListView = new ListView<>();
+        discountListView.getItems().addAll(discounts);
+        discountListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        discountListView.setPrefHeight(120);
+        discountListView.setCellFactory(lv -> new ListCell<>() {
             protected void updateItem(Discount d, boolean empty) {
                 super.updateItem(d, empty);
-                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType() + " (" + d.getDiscountSize() + "%)");
+                setText(empty || d == null ? "" :
+                        d.getId() + " — " + d.getDiscountType() + " (" + d.getDiscountSize() + "%)");
             }
         });
-        discountCombo.setButtonCell(new ListCell<>() {
-            protected void updateItem(Discount d, boolean empty) {
-                super.updateItem(d, empty);
-                setText(empty ? "" : d == null ? "— без скидки —" : d.getId() + " — " + d.getDiscountType() + " (" + d.getDiscountSize() + "%)");
+
+        if (existing != null && !existing.getDiscountIds().isEmpty()) {
+            for (int i = 0; i < discounts.size(); i++) {
+                if (existing.getDiscountIds().contains(discounts.get(i).getId())) {
+                    discountListView.getSelectionModel().select(i);
+                }
             }
-        });
-        if (existing != null && existing.getIdDiscount() != null) {
-            discounts.stream().filter(d -> d.getId() == existing.getIdDiscount())
-                    .findFirst().ifPresent(discountCombo::setValue);
         }
 
-        Label priceLabel = new Label("Итоговая стоимость: —");
+        Label priceLabel = new Label("Итоговая стоимость: ");
         priceLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #222;");
 
         Runnable recalc = () -> {
             Service s = serviceCombo.getValue();
-            Discount d = discountCombo.getValue();
-            BigDecimal price = calculateFinalPrice(s, d);
+            List<Discount> selected = new ArrayList<>(discountListView.getSelectionModel().getSelectedItems());
+            BigDecimal price = calculateFinalPrice(s, selected);
             priceLabel.setText("Итоговая стоимость: " + price);
         };
         serviceCombo.setOnAction(e -> recalc.run());
-        discountCombo.setOnAction(e -> recalc.run());
+        discountListView.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> recalc.run());
         recalc.run();
 
         Label errorLabel = new Label();
@@ -297,10 +309,13 @@ public class ProvidedServiceController {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
 
+        Label discountHint = new Label("Удерживайте Ctrl для выбора нескольких скидок");
+        discountHint.setStyle("-fx-font-size: 11; -fx-text-fill: #888;");
+
         VBox box = new VBox(8,
                 new Label("Сделка:"), dealCombo,
                 new Label("Услуга:"), serviceCombo,
-                new Label("Скидка:"), discountCombo,
+                new Label("Скидки:"), discountListView, discountHint,
                 priceLabel,
                 errorLabel
         );
@@ -333,15 +348,17 @@ public class ProvidedServiceController {
                 Service selectedService = serviceCombo.getValue();
                 if (selectedDeal == null || selectedService == null) return null;
 
-                Discount selectedDiscount = discountCombo.getValue();
-                Integer discountId = selectedDiscount != null ? selectedDiscount.getId() : null;
-                BigDecimal finalPrice = calculateFinalPrice(selectedService, selectedDiscount);
+                List<Discount> selectedDiscounts = new ArrayList<>(discountListView.getSelectionModel().getSelectedItems());
+                List<Integer> discountIds = selectedDiscounts.stream()
+                        .map(Discount::getId)
+                        .collect(Collectors.toList());
+                BigDecimal finalPrice = calculateFinalPrice(selectedService, selectedDiscounts);
 
                 return new ProvidedService(
                         existing != null ? existing.getId() : 0,
                         selectedDeal.getId(),
                         selectedService.getId(),
-                        discountId,
+                        discountIds,
                         existing != null ? existing.getServiceDate() : LocalDateTime.now(),
                         finalPrice.doubleValue()
                 );
